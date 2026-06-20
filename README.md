@@ -60,3 +60,16 @@ All parameters use the standard metric system:
 *   **Electricity:** 0.38 kg CO₂/kWh.
 *   **AC Cooling:** 0.50 kg CO₂/hour.
 *   **Gas Heating:** 0.18 kg CO₂/kWh.
+
+---
+
+## 🚀 Deploy to Render.com
+
+This project is pre-configured for automated deployment on **Render.com** using the `render.yaml` Blueprint:
+
+1.  Log in to your **Render.com** account.
+2.  Go to the **Blueprints** dashboard and click **New Blueprint Instance**.
+3.  Connect your GitHub repository: `https://github.com/Skyee1409/CarbonCount.git`.
+4.  Render will automatically parse `render.yaml` and set up the Python Web Service running Gunicorn.
+5.  Click **Approve** to build and spin up the live environment!
+
