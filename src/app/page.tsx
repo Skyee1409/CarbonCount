@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Leaf, User, Briefcase, GraduationCap, Award, Check, Calculator } from 'lucide-react';
+import { Leaf, User, Award, Calculator } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { useCarbonState } from '@/hooks/useCarbonState';
 import { calculateCarbon, scanElectricityBill, askChatbot } from '@/services/api';
@@ -12,7 +12,9 @@ import LeaderboardCard from '@/components/LeaderboardCard';
 import OffsetSimulator from '@/components/OffsetSimulator';
 import SavingsTracker from '@/components/SavingsTracker';
 import EmissionsTrend from '@/components/EmissionsTrend';
-import { getEmissionsGrade, getEmissionsRating, getEmissionsRatingDesc } from '@/utils/carbonUtils';
+import EmissionsGauge from '@/components/EmissionsGauge';
+import BreakdownChart from '@/components/BreakdownChart';
+import ActionPlanner from '@/components/ActionPlanner';
 
 interface Message {
   sender: 'bot' | 'user';
@@ -153,7 +155,7 @@ export default function CarbonFlowDashboard() {
       <circle
         key={cat}
         className={`donut-segment ${selectedCategory === cat ? 'active' : selectedCategory ? 'inactive' : ''}`}
-        cx="50" cy="50" r="40" fill="none"
+        cx="50" cx="50" r="40" fill="none"
         stroke={CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS] || '#10b981'}
         strokeWidth="12" strokeDasharray={`${strokeDash} ${strokeDashOffset}`} strokeDashoffset="0"
         transform={`rotate(${rotateAngle} 50 50)`} style={{ cursor: 'pointer' }}
@@ -217,57 +219,21 @@ export default function CarbonFlowDashboard() {
         />
 
         <section id="dashboard" className="dashboard-grid" style={{ display: results ? 'grid' : 'none' }}>
-          <div className="dashboard-card main-summary glass-panel">
-            <div className="summary-top"><div className="heading-sub">Your Carbon Status</div><h2>Carbon Footprint Score</h2></div>
-            <div className="gauge-center">
-              <div className="gauge-outer">
-                <svg className="gauge-svg" viewBox="0 0 100 100">
-                  <circle className="gauge-bg" cx="50" cy="50" r="40" />
-                  <circle className="gauge-value" cx="50" cy="50" r="40" strokeDasharray="251" strokeDashoffset={strokeDashoffset} stroke={gaugeColor} />
-                </svg>
-                <div className="gauge-content"><span className="gauge-number">{finalOffsetEmissionsTonnes.toFixed(2)}</span><span className="gauge-unit">tonnes CO₂e / yr</span></div>
-              </div>
-            </div>
-            <div className="summary-footer">
-              <div className="rating-badge-container">
-                Grade: <span className="grade-badge">{getEmissionsGrade(finalOffsetEmissionsTonnes)}</span>
-                <span className="rating-text">{getEmissionsRating(finalOffsetEmissionsTonnes)}</span>
-              </div>
-              <p className="rating-description">{getEmissionsRatingDesc(finalOffsetEmissionsTonnes)}</p>
-              <div className="benchmark-bar">
-                <div className="benchmark-marker" style={{ left: '12%' }}><span className="marker-label">Target (2t)</span></div>
-                <div className="benchmark-marker" style={{ left: '80%' }}><span className="marker-label">Average (16t)</span></div>
-                <div className="benchmark-progress" style={{ left: `${userMarkerPercent}%` }} />
-              </div>
-            </div>
-          </div>
+          <EmissionsGauge
+            finalOffsetEmissionsTonnes={finalOffsetEmissionsTonnes}
+            strokeDashoffset={strokeDashoffset}
+            gaugeColor={gaugeColor}
+            userMarkerPercent={userMarkerPercent}
+          />
 
-          <div className="dashboard-card breakdown-chart glass-panel">
-            <h3>Emissions Breakdown</h3>
-            <p className="section-desc">Click slices below to view details and personalized adjustments.</p>
-            <div className="chart-flex">
-              <div className="svg-chart-container">
-                <svg className="donut-svg" viewBox="0 0 100 100">{donutSegments}</svg>
-                <div className="donut-center-info"><Leaf className="text-emerald" /><span id="selected-slice-lbl" style={{ textTransform: 'capitalize' }}>{selectedCategory ?? 'All Categories'}</span></div>
-              </div>
-              <div className="chart-legend">
-                {Object.keys(catValues).map(cat => {
-                  const val = catValues[cat as keyof typeof catValues];
-                  if (val <= 0) return null;
-                  return (
-                    <div key={cat} className={`legend-item ${selectedCategory === cat ? 'active' : ''}`} onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}>
-                      <div className="legend-lbl-group">
-                        <span className="legend-color" style={{ backgroundColor: CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS] }} />
-                        <span className="legend-title" style={{ textTransform: 'capitalize' }}>{cat}</span>
-                      </div>
-                      <span className="legend-val">{(val / 1000).toFixed(1)}t ({totalVal > 0 ? Math.round((val / totalVal) * 100) : 0}%)</span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-            <div className="category-insight-box"><Info className="insight-icon" /><span>{getInsightText()}</span></div>
-          </div>
+          <BreakdownChart
+            selectedCategory={selectedCategory}
+            setSelectedCategory={setSelectedCategory}
+            donutSegments={donutSegments}
+            catValues={catValues}
+            totalVal={totalVal}
+            insightText={getInsightText()}
+          />
 
           <SavingsTracker
             savingsCo2={savingsCo2} savingsCash={savingsCash}
@@ -278,32 +244,12 @@ export default function CarbonFlowDashboard() {
             monthlyEmissionsKg={monthlyEmissionsKg} months={months} maxTrendVal={maxTrendVal}
           />
 
-          <div className="dashboard-card action-planner glass-panel">
-            <div className="card-header-flex">
-              <h3>Action Reduction Planner</h3>
-              <div className="action-filters">
-                {['all', 'travel', 'energy', 'diet'].map(filter => (
-                  <button key={filter} className={`tab-btn ${actionFilter === filter ? 'active' : ''}`} onClick={() => setActionFilter(filter as any)} style={{ textTransform: 'capitalize' }}>{filter}</button>
-                ))}
-              </div>
-            </div>
-            <div className="action-list scrollable">
-              {ECO_ACTIONS.filter(a => actionFilter === 'all' || a.category === actionFilter).map(action => (
-                <div key={action.id} className={`action-item-card ${committedActions[action.id] ? 'committed' : ''}`}>
-                  <div className="action-info-group">
-                    <div className="action-icon-badge"><Leaf className="action-icon" /></div>
-                    <div className="action-details">
-                      <span className="action-title">{action.title}</span>
-                      <div className="action-savings"><span className="saving-co2">-{action.carbonSaving} kg CO₂/yr</span><span className="saving-cash">+${action.cashSaving}/yr</span></div>
-                    </div>
-                  </div>
-                  <button className={`action-btn ${committedActions[action.id] ? 'committed' : ''}`} onClick={() => toggleActionCommit(action.id, action.carbonSaving)}>
-                    {committedActions[action.id] ? <>Committed <Check size={14} style={{ display: 'inline', marginLeft: 4 }} /></> : 'Commit'}
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
+          <ActionPlanner
+            actionFilter={actionFilter}
+            setActionFilter={setActionFilter}
+            committedActions={committedActions}
+            toggleActionCommit={toggleActionCommit}
+          />
 
           <LeaderboardCard
             activeMode={activeMode} leaderboardScope={leaderboardScope}
