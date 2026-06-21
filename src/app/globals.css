@@ -446,41 +446,6 @@ h1, h2, h3, h4, h5, h6 {
     width: 100%;
 }
 
-input[type="range"] {
-    -webkit-appearance: none;
-    width: 100%;
-    height: 6px;
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.08);
-    outline: none;
-}
-
-input[type="range"]::-webkit-slider-thumb {
-    -webkit-appearance: none;
-    width: 18px;
-    height: 18px;
-    border-radius: 50%;
-    background: var(--primary);
-    box-shadow: 0 0 10px var(--primary-glow);
-    cursor: pointer;
-    transition: var(--transition-fast);
-}
-
-input[type="range"]::-webkit-slider-thumb:hover {
-    transform: scale(1.2);
-}
-
-.slider-bubble {
-    background: rgba(16, 185, 129, 0.12);
-    border: 1px solid var(--panel-border);
-    padding: 4px 12px;
-    border-radius: var(--radius-xl);
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--mint);
-    white-space: nowrap;
-}
-
 /* Drag-Drop Bill Scanner Styles */
 .bill-scanner-box {
     margin-bottom: 24px;
@@ -1773,6 +1738,26 @@ svg.defs-only {
     position: absolute;
     width: 0;
     height: 0;
+}
+
+/* Reduced Motion Override for Accessibility (a11y) */
+@media (prefers-reduced-motion: reduce) {
+    * {
+        animation-delay: -1ms !important;
+        animation-duration: 1ms !important;
+        animation-iteration-count: 1 !important;
+        background-attachment: initial !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0s !important;
+        transition-delay: 0s !important;
+    }
+    .animate-bounce,
+    .animate-pulse,
+    .pulse-ring,
+    .scan-laser {
+        animation: none !important;
+        transform: none !important;
+    }
 }
 
 /* ==========================================================================
