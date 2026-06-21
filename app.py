@@ -47,6 +47,14 @@ def add_security_headers(response):
     response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
     return response
 
+@app.route('/api/debug-status')
+def debug_status():
+    return jsonify({
+        'status': 'ok',
+        'version': '1.0.3',
+        'commit': 'check-deploy-1'
+    })
+
 @app.route('/')
 def index():
     return render_template('index.html')
