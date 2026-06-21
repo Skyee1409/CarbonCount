@@ -18,24 +18,24 @@
     <div class="app-container">
         
         <!-- Header / Navigation -->
-        <header class="app-header">
-            <div class="header-logo">
-                <i data-lucide="leaf" class="logo-icon animate-pulse"></i>
+        <header class="app-header" role="banner">
+            <div class="header-logo" aria-label="CarbonFlow Home">
+                <i data-lucide="leaf" class="logo-icon animate-pulse" aria-hidden="true"></i>
                 <span class="logo-text">Carbon<span>Flow</span></span>
             </div>
             
             <!-- Mode Switcher -->
-            <div class="mode-selector">
-                <button class="mode-btn active" id="btn-personal" onclick="switchMode('personal')">
-                    <i data-lucide="user"></i> Personal
+            <nav class="mode-selector" aria-label="Mode selector">
+                <button class="mode-btn active" id="btn-personal" onclick="switchMode('personal')" aria-label="Switch to Personal Mode">
+                    <i data-lucide="user" aria-hidden="true"></i> Personal
                 </button>
-                <button class="mode-btn" id="btn-office" onclick="switchMode('office')">
-                    <i data-lucide="briefcase"></i> Office Team
+                <button class="mode-btn" id="btn-office" onclick="switchMode('office')" aria-label="Switch to Office Team Mode">
+                    <i data-lucide="briefcase" aria-hidden="true"></i> Office Team
                 </button>
-                <button class="mode-btn" id="btn-school" onclick="switchMode('school')">
-                    <i data-lucide="graduation-cap"></i> School Campus
+                <button class="mode-btn" id="btn-school" onclick="switchMode('school')" aria-label="Switch to School Campus Mode">
+                    <i data-lucide="graduation-cap" aria-hidden="true"></i> School Campus
                 </button>
-            </div>
+            </nav>
             
             <div class="header-profile">
                 <div class="badge-icon-container">
@@ -82,23 +82,21 @@
                         <h2>1. How do you Travel?</h2>
                         <p class="step-desc">Transportation accounts for 27% of greenhouse gas emissions. Tell us how you get around.</p>
                         
-                        <div class="form-group">
-                            <label>Primary Transit Mode</label>
-                            <div class="selector-grid">
-                                <div class="selector-option active" data-value="petrol_car" onclick="selectTransit(this)">
-                                    <i data-lucide="car"></i>
+                        <div class="selector-grid" role="radiogroup" aria-label="Transit modes">
+                                <div class="selector-option active" data-value="petrol_car" onclick="selectTransit(this)" role="radio" aria-checked="true" tabindex="0" aria-label="Petrol Car option">
+                                    <i data-lucide="car" aria-hidden="true"></i>
                                     <span>Petrol Car</span>
                                 </div>
-                                <div class="selector-option" data-value="ev_car" onclick="selectTransit(this)">
-                                    <i data-lucide="zap"></i>
+                                <div class="selector-option" data-value="ev_car" onclick="selectTransit(this)" role="radio" aria-checked="false" tabindex="0" aria-label="Electric EV option">
+                                    <i data-lucide="zap" aria-hidden="true"></i>
                                     <span>Electric EV</span>
                                 </div>
-                                <div class="selector-option" data-value="public_transit" onclick="selectTransit(this)">
-                                    <i data-lucide="bus"></i>
+                                <div class="selector-option" data-value="public_transit" onclick="selectTransit(this)" role="radio" aria-checked="false" tabindex="0" aria-label="Bus or Train option">
+                                    <i data-lucide="bus" aria-hidden="true"></i>
                                     <span>Bus/Train</span>
                                 </div>
-                                <div class="selector-option" data-value="bike_walk" onclick="selectTransit(this)">
-                                    <i data-lucide="bike"></i>
+                                <div class="selector-option" data-value="bike_walk" onclick="selectTransit(this)" role="radio" aria-checked="false" tabindex="0" aria-label="Walk or Bike option">
+                                    <i data-lucide="bike" aria-hidden="true"></i>
                                     <span>Walk/Bike</span>
                                 </div>
                             </div>
@@ -157,15 +155,15 @@
                         <div class="manual-inputs-grid">
                             <div class="form-group">
                                 <label for="input-electricity">Electricity / Month (kWh)</label>
-                                <input type="number" id="input-electricity" min="0" value="250" placeholder="e.g. 250">
+                                <input type="number" id="input-electricity" min="0" value="250" placeholder="e.g. 250" aria-label="Monthly electricity usage in kilowatt hours">
                             </div>
                             <div class="form-group">
                                 <label for="input-ac-hours">Weekly AC Usage (Hours)</label>
-                                <input type="number" id="input-ac-hours" min="0" value="15" placeholder="e.g. 15">
+                                <input type="number" id="input-ac-hours" min="0" value="15" placeholder="e.g. 15" aria-label="Weekly air conditioner usage hours">
                             </div>
                             <div class="form-group">
                                 <label for="input-gas">Gas Heating / Month (kWh)</label>
-                                <input type="number" id="input-gas" min="0" value="100" placeholder="e.g. 100">
+                                <input type="number" id="input-gas" min="0" value="100" placeholder="e.g. 100" aria-label="Monthly gas usage in kilowatt hours">
                             </div>
                         </div>
 
@@ -180,31 +178,31 @@
                         <h2>3. What is your Diet?</h2>
                         <p class="step-desc">Agriculture, especially livestock, is a massive carbon driver. Choose your closest eating pattern.</p>
                         
-                        <div class="selector-grid vertical">
-                            <div class="selector-option vertical active" data-value="meat_heavy" onclick="selectDiet(this)">
+                        <div class="selector-grid vertical" role="radiogroup" aria-label="Dietary choices">
+                            <div class="selector-option vertical active" data-value="meat_heavy" onclick="selectDiet(this)" role="radio" aria-checked="true" tabindex="0" aria-label="Meat Heavy diet description">
                                 <div class="option-header">
-                                    <i data-lucide="beef" class="meat-red"></i>
+                                    <i data-lucide="beef" class="meat-red" aria-hidden="true"></i>
                                     <strong>Meat-Heavy</strong>
                                 </div>
                                 <p class="option-sub">Eat beef, pork, or lamb almost daily. (~2,900 kg CO₂e/yr)</p>
                             </div>
-                            <div class="selector-option vertical" data-value="balanced" onclick="selectDiet(this)">
+                            <div class="selector-option vertical" data-value="balanced" onclick="selectDiet(this)" role="radio" aria-checked="false" tabindex="0" aria-label="Balanced diet description">
                                 <div class="option-header">
-                                    <i data-lucide="drumstick" class="meat-white"></i>
+                                    <i data-lucide="drumstick" class="meat-white" aria-hidden="true"></i>
                                     <strong>Balanced</strong>
                                 </div>
                                 <p class="option-sub">Eat meat, poultry, and fish in moderation. (~1,700 kg CO₂e/yr)</p>
                             </div>
-                            <div class="selector-option vertical" data-value="vegetarian" onclick="selectDiet(this)">
+                            <div class="selector-option vertical" data-value="vegetarian" onclick="selectDiet(this)" role="radio" aria-checked="false" tabindex="0" aria-label="Vegetarian diet description">
                                 <div class="option-header">
-                                    <i data-lucide="egg" class="text-orange"></i>
+                                    <i data-lucide="egg" class="text-orange" aria-hidden="true"></i>
                                     <strong>Vegetarian</strong>
                                 </div>
                                 <p class="option-sub">No meat, but eat eggs and dairy. (~1,200 kg CO₂e/yr)</p>
                             </div>
-                            <div class="selector-option vertical" data-value="vegan" onclick="selectDiet(this)">
+                            <div class="selector-option vertical" data-value="vegan" onclick="selectDiet(this)" role="radio" aria-checked="false" tabindex="0" aria-label="Vegan diet description">
                                 <div class="option-header">
-                                    <i data-lucide="salad" class="text-emerald"></i>
+                                    <i data-lucide="salad" class="text-emerald" aria-hidden="true"></i>
                                     <strong>Vegan</strong>
                                 </div>
                                 <p class="option-sub">100% plant-based diet. (~800 kg CO₂e/yr)</p>
@@ -225,17 +223,17 @@
                         
                         <div class="form-group">
                             <label>Consumption Level (Clothes, Gadgets, Packages)</label>
-                            <div class="selector-grid">
-                                <div class="selector-option" data-value="low" onclick="selectShopping(this)">
-                                    <i data-lucide="shopping-bag" class="text-mint"></i>
+                            <div class="selector-grid" role="radiogroup" aria-label="Consumption Level">
+                                <div class="selector-option" data-value="low" onclick="selectShopping(this)" role="radio" aria-checked="false" tabindex="0" aria-label="Minimalist consumption">
+                                    <i data-lucide="shopping-bag" class="text-mint" aria-hidden="true"></i>
                                     <span>Minimalist</span>
                                 </div>
-                                <div class="selector-option active" data-value="medium" onclick="selectShopping(this)">
-                                    <i data-lucide="shopping-cart" class="text-emerald"></i>
+                                <div class="selector-option active" data-value="medium" onclick="selectShopping(this)" role="radio" aria-checked="true" tabindex="0" aria-label="Moderate consumption">
+                                    <i data-lucide="shopping-cart" class="text-emerald" aria-hidden="true"></i>
                                     <span>Moderate</span>
                                 </div>
-                                <div class="selector-option" data-value="high" onclick="selectShopping(this)">
-                                    <i data-lucide="store" class="text-red"></i>
+                                <div class="selector-option" data-value="high" onclick="selectShopping(this)" role="radio" aria-checked="false" tabindex="0" aria-label="Frequent consumption">
+                                    <i data-lucide="store" class="text-red" aria-hidden="true"></i>
                                     <span>Frequent</span>
                                 </div>
                             </div>
@@ -244,17 +242,17 @@
 
                         <div class="form-group">
                             <label>Waste Recycling habits</label>
-                            <div class="selector-grid">
-                                <div class="selector-option" data-value="zero_waste" onclick="selectWaste(this)">
-                                    <i data-lucide="recycle" class="text-mint"></i>
+                            <div class="selector-grid" role="radiogroup" aria-label="Recycling habits">
+                                <div class="selector-option" data-value="zero_waste" onclick="selectWaste(this)" role="radio" aria-checked="false" tabindex="0" aria-label="Diligent recycling">
+                                    <i data-lucide="recycle" class="text-mint" aria-hidden="true"></i>
                                     <span>Diligent</span>
                                 </div>
-                                <div class="selector-option active" data-value="moderate" onclick="selectWaste(this)">
-                                    <i data-lucide="trash-2" class="text-emerald"></i>
+                                <div class="selector-option active" data-value="moderate" onclick="selectWaste(this)" role="radio" aria-checked="true" tabindex="0" aria-label="Occasional recycling">
+                                    <i data-lucide="trash-2" class="text-emerald" aria-hidden="true"></i>
                                     <span>Occasional</span>
                                 </div>
-                                <div class="selector-option" data-value="unrecycled" onclick="selectWaste(this)">
-                                    <i data-lucide="flame" class="text-red"></i>
+                                <div class="selector-option" data-value="unrecycled" onclick="selectWaste(this)" role="radio" aria-checked="false" tabindex="0" aria-label="No Recycling">
+                                    <i data-lucide="flame" class="text-red" aria-hidden="true"></i>
                                     <span>No Recycling</span>
                                 </div>
                             </div>
@@ -476,42 +474,42 @@
         </main>
 
         <!-- Recalculate Sticky Float Button -->
-        <button class="recalc-float-btn" title="Recalculate Carbon footprint" onclick="openRecalculateWizard()">
-            <i data-lucide="calculator"></i>
+        <button class="recalc-float-btn" title="Recalculate Carbon footprint" onclick="openRecalculateWizard()" aria-label="Recalculate Carbon footprint">
+            <i data-lucide="calculator" aria-hidden="true"></i>
             <span>Recalculate</span>
         </button>
 
         <!-- AI Assistant Floating Widget -->
         <div class="ai-widget-container" id="ai-chat-widget">
-            <button class="ai-chat-trigger" onclick="toggleChatbot()">
-                <i data-lucide="message-square" id="chat-icon-trigger"></i>
-                <span class="pulse-ring"></span>
+            <button class="ai-chat-trigger" onclick="toggleChatbot()" aria-label="Open AI Eco-Assistant Chat">
+                <i data-lucide="message-square" id="chat-icon-trigger" aria-hidden="true"></i>
+                <span class="pulse-ring" aria-hidden="true"></span>
             </button>
             
-            <div class="ai-chat-box glass-panel" id="chat-box-container">
+            <div class="ai-chat-box glass-panel" id="chat-box-container" role="dialog" aria-label="AI Eco-Assistant Panel">
                 <div class="chat-header">
                     <div class="chat-header-info">
-                        <i data-lucide="bot" class="chat-bot-icon text-emerald"></i>
+                        <i data-lucide="bot" class="chat-bot-icon text-emerald" aria-hidden="true"></i>
                         <div>
                             <h4>Eco-Assistant</h4>
                             <span class="status-indicator">Online</span>
                         </div>
                     </div>
-                    <button class="close-chat-btn" onclick="toggleChatbot()">
-                        <i data-lucide="x"></i>
+                    <button class="close-chat-btn" onclick="toggleChatbot()" aria-label="Close chatbot">
+                        <i data-lucide="x" aria-hidden="true"></i>
                     </button>
                 </div>
                 
-                <div class="chat-messages" id="chat-messages-container">
+                <div class="chat-messages" id="chat-messages-container" aria-live="polite">
                     <div class="msg bot-msg">
                         <p>Hi! I'm your CarbonFlow Eco-Assistant. Ask me any questions about saving energy, diet swaps, transport efficiency, or carbon tracking!</p>
                     </div>
                 </div>
                 
                 <div class="chat-input-area">
-                    <input type="text" id="chat-input-field" placeholder="Ask a green question..." onkeypress="handleChatKeypress(event)">
-                    <button class="send-msg-btn" onclick="sendChatMessage()">
-                        <i data-lucide="send"></i>
+                    <input type="text" id="chat-input-field" placeholder="Ask a green question..." onkeypress="handleChatKeypress(event)" aria-label="Type your sustainability question">
+                    <button class="send-msg-btn" onclick="sendChatMessage()" aria-label="Send message">
+                        <i data-lucide="send" aria-hidden="true"></i>
                     </button>
                 </div>
             </div>
