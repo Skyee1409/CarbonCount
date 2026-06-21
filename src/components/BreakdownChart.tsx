@@ -5,7 +5,6 @@ import { CATEGORY_COLORS } from '@/components/ecoActions';
 interface BreakdownChartProps {
   selectedCategory: string | null;
   setSelectedCategory: (cat: string | null) => void;
-  donutSegments: React.ReactNode[];
   catValues: Record<string, number>;
   totalVal: number;
   insightText: string;
@@ -14,11 +13,52 @@ interface BreakdownChartProps {
 export default function BreakdownChart({
   selectedCategory,
   setSelectedCategory,
-  donutSegments,
   catValues,
   totalVal,
   insightText
 }: BreakdownChartProps) {
+  let cumulatedPercent = 0;
+  const donutSegments = Object.entries(catValues).map(([cat, val]) => {
+    if (val <= 0 || totalVal <= 0) return null;
+    const percent = val / totalVal;
+    const strokeDash = percent * 251.3;
+    const strokeDashOffset = 251.3 - strokeDash;
+    const rotateAngle = (cumulatedPercent * 360) - 90;
+    cumulatedPercent += percent;
+
+    return (
+      <circle
+        key={cat}
+        className={`donut-segment ${selectedCategory === cat ? 'active' : selectedCategory ? 'inactive' : ''}`}
+        cx="50"
+        cy="50"
+        r="40"
+        fill="none"
+        stroke={CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS] || '#10b981'}
+        strokeWidth="12"
+        strokeDasharray={`${strokeDash} ${strokeDashOffset}`}
+        strokeDashoffset="0"
+        transform={`rotate(${rotateAngle} 50 50)`}
+        style={{ cursor: 'pointer' }}
+        onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
+      />
+    );
+  }).filter(Boolean);
+
+  if (donutSegments.length === 0 || totalVal === 0) {
+    donutSegments.push(
+      <circle
+        key="placeholder"
+        cx="50"
+        cy="50"
+        r="40"
+        stroke="var(--mint)"
+        strokeWidth="12"
+        fill="none"
+      />
+    );
+  }
+
   return (
     <div className="dashboard-card breakdown-chart glass-panel">
       <h3>Emissions Breakdown</h3>

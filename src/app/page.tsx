@@ -4,8 +4,11 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Leaf, User, Award, Calculator } from 'lucide-react';
 import DOMPurify from 'dompurify';
 import { useCarbonState } from '@/hooks/useCarbonState';
-import { calculateCarbon, scanElectricityBill, askChatbot } from '@/services/api';
-import { ECO_ACTIONS, CATEGORY_COLORS } from '@/components/ecoActions';
+import { useChatbot } from '@/hooks/useChatbot';
+import { useOcrScanner } from '@/hooks/useOcrScanner';
+import { useLeaderboardData } from '@/hooks/useLeaderboardData';
+import { calculateCarbon } from '@/services/api';
+import { ECO_ACTIONS } from '@/components/ecoActions';
 import OnboardingWizard from '@/components/OnboardingWizard';
 import ChatbotWidget from '@/components/ChatbotWidget';
 import LeaderboardCard from '@/components/LeaderboardCard';
@@ -16,12 +19,6 @@ import EmissionsGauge from '@/components/EmissionsGauge';
 import BreakdownChart from '@/components/BreakdownChart';
 import ActionPlanner from '@/components/ActionPlanner';
 
-interface Message {
-  sender: 'bot' | 'user';
-  text: string;
-  isTyping?: boolean;
-}
-
 export default function CarbonFlowDashboard() {
   const {
     currentStep, setCurrentStep, calculatorData, updateCalculatorValue,
@@ -30,32 +27,19 @@ export default function CarbonFlowDashboard() {
     leaderboardScope, setLeaderboardScope, xp, addXp
   } = useCarbonState();
 
+  const { isChatOpen, setIsChatOpen, chatMessages, chatInput, setChatInput, handleSendMessage } = useChatbot();
+  const { scannerState, scannedKwh, scannedFileName, handleOcrFile, handleResetScanner } = useOcrScanner(updateCalculatorValue);
+  const { leaderboardData, leaderboardLoading } = useLeaderboardData(activeMode, leaderboardScope);
+
   const [showWizard, setShowWizard] = useState(true);
-  const [scannerState, setScannerState] = useState<'default' | 'scanning' | 'success'>('default');
-  const [scannedKwh, setScannedKwh] = useState<number | null>(null);
-  const [scannedFileName, setScannedFileName] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [actionFilter, setActionFilter] = useState<'all' | 'travel' | 'energy' | 'diet'>('all');
-  const [leaderboardData, setLeaderboardData] = useState<any[]>([]);
-  const [leaderboardLoading, setLeaderboardLoading] = useState(false);
-
-  const [isChatOpen, setIsChatOpen] = useState(false);
-  const [chatMessages, setChatMessages] = useState<Message[]>([
-    { sender: 'bot', text: "Hi! I'm your CarbonFlow Eco-Assistant. Ask me any questions about saving energy, diet swaps, transport efficiency, or carbon tracking!" }
-  ]);
-  const [chatInput, setChatInput] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const chatMessagesEndRef = useRef<HTMLDivElement>(null);
   const chatContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (results) setShowWizard(false);
   }, [results]);
-
-  useEffect(() => {
-    if (chatMessagesEndRef.current) chatMessagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
-  }, [chatMessages]);
 
   let savingsCo2 = 0, savingsCash = 0;
   ECO_ACTIONS.forEach(action => {
@@ -65,10 +49,8 @@ export default function CarbonFlowDashboard() {
     }
   });
 
-  const baseEmissions = results?.total_kg ?? 0;
-  const netAnnualEmissionsKg = Math.max(0, baseEmissions - savingsCo2);
-  const netAnnualEmissionsTonnes = netAnnualEmissionsKg / 1000.0;
-  const finalOffsetEmissionsTonnes = netAnnualEmissionsTonnes * (1 - (offsetPercent / 100.0));
+  const netAnnualEmissionsKg = Math.max(0, (results?.total_kg ?? 0) - savingsCo2);
+  const finalOffsetEmissionsTonnes = (netAnnualEmissionsKg / 1000.0) * (1 - (offsetPercent / 100.0));
 
   const getSavingsByCategory = (cat: string) => {
     let saved = 0;
@@ -102,75 +84,16 @@ export default function CarbonFlowDashboard() {
     const val = catValues[selectedCategory as keyof typeof catValues] ?? 0;
     const percent = totalVal > 0 ? Math.round((val / totalVal) * 100) : 0;
     const tips: Record<string, string> = {
-      travel: `🚲 Travel accounts for ${percent}% of your footprint. Swap just 2 short drives weekly for a bike/walk to cut 100kg CO₂ and save on fuel.`,
-      energy: `⚡ Home power accounts for ${percent}% of your footprint. Set your AC to 24°C and unplug vampire adapters to save ~$120/year.`,
-      diet: `🥗 Diet accounts for ${percent}% of your footprint. Swapping beef for poultry or going meatless on Mondays reduces food emissions by up to 50%!`,
-      shopping: `🛍️ Shopping accounts for ${percent}% of your footprint. Try buying quality, second-hand items or delay new gadget purchases to reduce raw waste.`,
-      waste: `♻️ Waste accounts for ${percent}% of your footprint. Proper separation and recycling can divert organic waste from methane-producing landfills.`
+      travel: `🚲 Travel accounts for ${percent}% of your footprint. Swap just 2 short drives weekly for a bike/walk.`,
+      energy: `⚡ Home power accounts for ${percent}% of your footprint. Set your AC to 24°C and unplug vampire adapters.`,
+      diet: `🥗 Diet accounts for ${percent}% of your footprint. Swap beef for poultry.`,
+      shopping: `🛍️ Shopping accounts for ${percent}% of your footprint. Buy second-hand.`,
+      waste: `♻️ Waste accounts for ${percent}% of your footprint. Recycle organic waste.`
     };
     return tips[selectedCategory] || "Select slices to show tips.";
   };
 
-  const handleOcrFile = async (file: File) => {
-    setScannerState('scanning');
-    try {
-      const res = await scanElectricityBill(file);
-      await new Promise(r => setTimeout(r, 2200));
-      setScannerState('success');
-      setScannedKwh(res.extracted_kwh);
-      setScannedFileName(file.name);
-      updateCalculatorValue('electricityKwh', res.extracted_kwh);
-    } catch (err) {
-      console.error(err);
-      setScannerState('default');
-      alert('OCR Scanning issue. Please enter kWh value manually.');
-    }
-  };
-
-  const handleSendMessage = async () => {
-    if (!chatInput.trim()) return;
-    const msgText = chatInput.trim();
-    setChatInput('');
-    setChatMessages(prev => [...prev, { sender: 'user', text: msgText }]);
-    setChatMessages(prev => [...prev, { sender: 'bot', text: 'Thinking...', isTyping: true }]);
-    try {
-      const res = await askChatbot(msgText);
-      setChatMessages(prev => [...prev.filter(m => !m.isTyping), { sender: 'bot', text: res.reply }]);
-    } catch (err) {
-      console.error(err);
-      setChatMessages(prev => [...prev.filter(m => !m.isTyping), { sender: 'bot', text: "Sorry, I'm having trouble connecting right now." }]);
-    }
-  };
-
-  let cumulatedPercent = 0;
-  const donutSegments = Object.entries(catValues).map(([cat, val]) => {
-    if (val <= 0 || totalVal <= 0) return null;
-    const percent = val / totalVal;
-    const strokeDash = percent * 251.3;
-    const strokeDashOffset = 251.3 - strokeDash;
-    const rotateAngle = (cumulatedPercent * 360) - 90;
-    cumulatedPercent += percent;
-
-    return (
-      <circle
-        key={cat}
-        className={`donut-segment ${selectedCategory === cat ? 'active' : selectedCategory ? 'inactive' : ''}`}
-        cx="50" cx="50" r="40" fill="none"
-        stroke={CATEGORY_COLORS[cat as keyof typeof CATEGORY_COLORS] || '#10b981'}
-        strokeWidth="12" strokeDasharray={`${strokeDash} ${strokeDashOffset}`} strokeDashoffset="0"
-        transform={`rotate(${rotateAngle} 50 50)`} style={{ cursor: 'pointer' }}
-        onClick={() => setSelectedCategory(cat === selectedCategory ? null : cat)}
-      />
-    );
-  }).filter(Boolean);
-
-  if (donutSegments.length === 0 || totalVal === 0) {
-    donutSegments.push(<circle key="placeholder" cx="50" cy="50" r="40" stroke="var(--mint)" strokeWidth="12" fill="none" />);
-  }
-
-  const offsetKgTotal = netAnnualEmissionsKg * (offsetPercent / 100.0);
-  const offsetTonnes = offsetKgTotal / 1000.0;
-  const activeBadges = ECO_ACTIONS.filter(a => committedActions[a.id]);
+  const monthlyEmissionsKg = [1200, 1050, 920, 800, 750, Math.round(netAnnualEmissionsKg / 12)];
 
   return (
     <div className="app-container">
@@ -188,10 +111,7 @@ export default function CarbonFlowDashboard() {
         </nav>
         <div className="header-profile">
           <div className="badge-icon-container"><Award className="gold-badge animate-bounce" /></div>
-          <div className="profile-info">
-            <span className="profile-name">Eco Explorer</span>
-            <span className="profile-xp">{xp} XP</span>
-          </div>
+          <div className="profile-info"><span className="profile-name">Eco Explorer</span><span className="profile-xp">{xp} XP</span></div>
         </div>
       </header>
 
@@ -206,7 +126,7 @@ export default function CarbonFlowDashboard() {
               setOffsetPercent(0);
               setShowWizard(false);
             } catch (err) {
-              setCalculationResults({ breakdown: { travel: 2200, energy: 3100, diet: 1700, shopping: 800, waste: 200 }, total_kg: 8000, total_tonnes: 8.0, rating: 'Eco-Champ', rating_desc: 'Offline calculations: Good effort!', grade: 'A', national_average: 16.0, global_target: 2.0 });
+              setCalculationResults({ breakdown: { travel: 2200, energy: 3100, diet: 1700, shopping: 800, waste: 200 }, total_kg: 8000, total_tonnes: 8.0, rating: 'Eco-Champ', rating_desc: 'Offline calculations!', grade: 'A', national_average: 16.0, global_target: 2.0 });
               setShowWizard(false);
             }
           }}
@@ -214,54 +134,17 @@ export default function CarbonFlowDashboard() {
           scannerState={scannerState} scannedKwh={scannedKwh} scannedFileName={scannedFileName}
           handleFileDrop={e => { e.preventDefault(); if (e.dataTransfer.files?.[0]) handleOcrFile(e.dataTransfer.files[0]); }}
           handleFileChange={e => { if (e.target.files?.[0]) handleOcrFile(e.target.files[0]); }}
-          handleResetScanner={e => { e.stopPropagation(); setScannerState('default'); setScannedKwh(null); setScannedFileName(null); }}
-          fileInputRef={fileInputRef}
+          handleResetScanner={handleResetScanner} fileInputRef={fileInputRef}
         />
 
         <section id="dashboard" className="dashboard-grid" style={{ display: results ? 'grid' : 'none' }}>
-          <EmissionsGauge
-            finalOffsetEmissionsTonnes={finalOffsetEmissionsTonnes}
-            strokeDashoffset={strokeDashoffset}
-            gaugeColor={gaugeColor}
-            userMarkerPercent={userMarkerPercent}
-          />
-
-          <BreakdownChart
-            selectedCategory={selectedCategory}
-            setSelectedCategory={setSelectedCategory}
-            donutSegments={donutSegments}
-            catValues={catValues}
-            totalVal={totalVal}
-            insightText={getInsightText()}
-          />
-
-          <SavingsTracker
-            savingsCo2={savingsCo2} savingsCash={savingsCash}
-            milestoneRatio={milestoneRatio} milestonePercent={milestonePercent} activeBadges={activeBadges}
-          />
-
-          <EmissionsTrend
-            monthlyEmissionsKg={monthlyEmissionsKg} months={months} maxTrendVal={maxTrendVal}
-          />
-
-          <ActionPlanner
-            actionFilter={actionFilter}
-            setActionFilter={setActionFilter}
-            committedActions={committedActions}
-            toggleActionCommit={toggleActionCommit}
-          />
-
-          <LeaderboardCard
-            activeMode={activeMode} leaderboardScope={leaderboardScope}
-            setLeaderboardScope={setLeaderboardScope} leaderboardLoading={leaderboardLoading} leaderboardData={leaderboardData}
-          />
-
-          <OffsetSimulator
-            offsetPercent={offsetPercent} setOffsetPercent={setOffsetPercent}
-            trees={Math.round(offsetKgTotal / 22.0)} turbineHours={Math.round(offsetKgTotal / 0.5)}
-            offsetTonnes={offsetTonnes} cost={Math.max(1, Math.round(offsetTonnes * 12.0))}
-            handleCheckoutOffset={() => { alert(`Success! Offsetted ${offsetPercent}%. Unlocked XP bonus +200.`); addXp(200); setOffsetPercent(0); }}
-          />
+          <EmissionsGauge finalOffsetEmissionsTonnes={finalOffsetEmissionsTonnes} strokeDashoffset={strokeDashoffset} gaugeColor={gaugeColor} userMarkerPercent={userMarkerPercent} />
+          <BreakdownChart selectedCategory={selectedCategory} setSelectedCategory={setSelectedCategory} catValues={catValues} totalVal={totalVal} insightText={getInsightText()} />
+          <SavingsTracker savingsCo2={savingsCo2} savingsCash={savingsCash} milestoneRatio={milestoneRatio} milestonePercent={milestonePercent} activeBadges={ECO_ACTIONS.filter(a => committedActions[a.id])} />
+          <EmissionsTrend monthlyEmissionsKg={monthlyEmissionsKg} months={['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun (You)']} maxTrendVal={Math.max(...monthlyEmissionsKg, 1000)} />
+          <ActionPlanner actionFilter={actionFilter} setActionFilter={setActionFilter} committedActions={committedActions} toggleActionCommit={toggleActionCommit} />
+          <LeaderboardCard activeMode={activeMode} leaderboardScope={leaderboardScope} setLeaderboardScope={setLeaderboardScope} leaderboardLoading={leaderboardLoading} leaderboardData={leaderboardData} />
+          <OffsetSimulator offsetPercent={offsetPercent} setOffsetPercent={setOffsetPercent} trees={Math.round((netAnnualEmissionsKg * (offsetPercent / 100.0)) / 22.0)} turbineHours={Math.round((netAnnualEmissionsKg * (offsetPercent / 100.0)) / 0.5)} offsetTonnes={(netAnnualEmissionsKg * (offsetPercent / 100.0)) / 1000.0} cost={Math.max(1, Math.round(((netAnnualEmissionsKg * (offsetPercent / 100.0)) / 1000.0) * 12.0))} handleCheckoutOffset={() => { alert(`Success! Offsetted ${offsetPercent}%. Unlocked XP bonus +200.`); addXp(200); setOffsetPercent(0); }} />
         </section>
       </main>
 
